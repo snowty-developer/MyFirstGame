@@ -120,7 +120,7 @@ class GameViewController: UIViewController {
             // highlight it
             SCNTransaction.begin()
             SCNTransaction.animationDuration = 0.2
-            
+            //jhkjkjhk
             // on completion - unhighlight
             SCNTransaction.completionBlock = {
 //                SCNTransaction.begin()
