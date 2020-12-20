@@ -39,6 +39,10 @@ class GameViewController: UIViewController {
         return ship
     }
     
+    func newGame() {
+        addShip()
+    }
+    
     func removeShip() {
         scene.rootNode.childNode(withName: "ship", recursively: true)?.removeFromParentNode()
     }
@@ -97,7 +101,7 @@ class GameViewController: UIViewController {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         scnView.addGestureRecognizer(tapGesture)
         removeShip()
-        addShip()
+        newGame()
     }
     
     //MARK: - Actions
@@ -120,7 +124,7 @@ class GameViewController: UIViewController {
             // highlight it
             SCNTransaction.begin()
             SCNTransaction.animationDuration = 0.2
-            //jhkjkjhk
+            
             // on completion - unhighlight
             SCNTransaction.completionBlock = {
 //                SCNTransaction.begin()
@@ -130,6 +134,7 @@ class GameViewController: UIViewController {
 //
 //                SCNTransaction.commit()
                 self.removeShip()
+                self.newGame()
             }
             
             material.emission.contents = UIColor.red
