@@ -10,15 +10,25 @@ import QuartzCore
 import SceneKit
 
 class GameViewController: UIViewController {
+    //MARK: - Outlets
+    let scoreLabel = UILabel()
+    let restartButton = UIButton()
+    
     //MARK: - Properties
     var scene: SCNScene!
-    
+    var duration: TimeInterval = 5
+    var hit = true
+    var score = 0 {
+        didSet {
+            scoreLabel.text = "Score: \(score)"
+        }
+    }
     //MARK: - Methods
     func addShip() {
         let ship = getShip()
         
-        let x = 25
-        let y = 25
+        let x = Int.random(in: -25...25)
+        let y = Int.random(in: -25...25)
         let z = -120
         ship.position = SCNVector3(x, y, z)
         ship.look(at: SCNVector3(2 * x, 2 * y, 2 * z))
@@ -26,7 +36,9 @@ class GameViewController: UIViewController {
         //1ый вариант
         //ship.runAction(.move(to: SCNVector3(), duration: 5), completionHandler: { self.removeShip() })
         //2ой вариант
-        ship.runAction(.move(to: SCNVector3(), duration: 5)) { self.removeShip() }
+        ship.runAction(.move(to: SCNVector3(), duration: duration)) { self.removeShip(); self.newGame() }
+        
+        hit = false
         
         scene.rootNode.addChildNode(ship)
     }
@@ -40,11 +52,58 @@ class GameViewController: UIViewController {
     }
     
     func newGame() {
+        guard hit else {
+            DispatchQueue.main.async {
+                self.restartButton.isHidden = false
+            }
+            return
+        }
+        
         addShip()
+        
+        duration *= 0.9
     }
     
     func removeShip() {
-        scene.rootNode.childNode(withName: "ship", recursively: true)?.removeFromParentNode()
+        var ship: SCNNode?
+        
+        repeat {
+            ship = scene.rootNode.childNode(withName: "ship", recursively: true)
+            ship?.removeFromParentNode()
+        } while ship != nil
+    }
+    
+    func configureLayout()  {
+        let scnView = self.view as! SCNView
+        
+        //add button
+        let width = CGFloat(200)
+        let height = CGFloat(100)
+        let x = scnView.frame.midX - width/2
+        let y = scnView.frame.midY - height/2
+        
+        restartButton.isHidden = true
+        restartButton.backgroundColor = .red
+        restartButton.frame = CGRect(x: x, y: y, width: width, height: height)
+        restartButton.layer.cornerRadius = 15
+        restartButton.setTitle("New Game", for: .normal)
+        restartButton.titleLabel?.font = .systemFont(ofSize: 30)
+        restartButton.titleLabel?.textColor = .yellow
+    
+        scnView.addSubview(restartButton)
+        
+        //add Label
+        scoreLabel.font = UIFont.systemFont(ofSize: 30)
+        scoreLabel.textColor = .white
+        scoreLabel.frame = CGRect(x: 0, y: 0, width: scnView.frame.width, height: 100)
+        scoreLabel.textAlignment = .center
+        
+        scnView.addSubview(scoreLabel)
+        
+        score = 0
+        
+        //add action for restartButton
+        restartButton.addTarget(self, action: #selector(restartButtonTapped), for: .touchUpInside)
     }
     //MARK: - Inherited methods
 
@@ -100,8 +159,11 @@ class GameViewController: UIViewController {
         // add a tap gesture recognizer
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         scnView.addGestureRecognizer(tapGesture)
+        
+        
         removeShip()
         newGame()
+        configureLayout()
     }
     
     //MARK: - Actions
@@ -115,6 +177,8 @@ class GameViewController: UIViewController {
         let hitResults = scnView.hitTest(p, options: [:])
         // check that we clicked on at least one object
         if hitResults.count > 0 {
+            hit = true
+            
             // retrieved the first clicked object
             let result = hitResults[0]
             
@@ -135,12 +199,22 @@ class GameViewController: UIViewController {
 //                SCNTransaction.commit()
                 self.removeShip()
                 self.newGame()
+                self.score += 1
             }
             
             material.emission.contents = UIColor.red
             
             SCNTransaction.commit()
         }
+    }
+    
+    @objc func restartButtonTapped() {
+        duration = 5
+        hit = true
+        restartButton.isHidden = true
+        score = 0
+        
+        newGame()
     }
     
     //MARK: - Computed properties
